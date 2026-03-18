@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-gray-100">
+
+<div class="max-w-3xl mx-auto mt-10 bg-white p-6 rounded-xl shadow">
+
+  <h2 class="text-2xl font-bold mb-6 text-center text-blue-700">
+    ระบบส่งเอกสารช่วยเหลือผู้ประสบภัยพิบัติ
+  </h2>
+
+  <form id="form" class="space-y-4">
+
+    <input type="text" id="unitName" placeholder="ชื่อหน่วยงาน"
+      class="w-full p-3 border rounded" required>
+
+    <!-- รายการเอกสาร 11 รายการ -->
+    <div class="space-y-2">
+      <label>1. หนังสือนำส่งเอกสารของสำนักงานป้องกันและบรรเทาสาธารณภัย</label>
+      <input type="file" id="file1" class="w-full">
+
+      <label>2. ประกาศเขตการให้ความช่วยเหลือผู้ประสบภัยพิบัติ</label>
+      <input type="file" id="file2" class="w-full">
+
+      <label>3. รายงานการประชุมคณะกรรมการเชิงป้องกันและยับยั้งภัยพิบัติ</label>
+      <input type="file" id="file3" class="w-full">
+
+      <label>4. หนังสืออนุมัติการใช้จ่ายเงินทดรองฯ ที่ลงนามโดยผู้ว่าราชการจังหวัด</label>
+      <input type="file" id="file4" class="w-full">
+
+      <label>5. เอกสารขอเบิกเงินนอกงบประมาณ (แบบ ขบ 03)</label>
+      <input type="file" id="file5" class="w-full">
+
+      <label>6. แบบบัญชีสรุปรายละเอียดโครงการที่ขอรับความช่วยเหลือ (ชภ.1)</label>
+      <input type="file" id="file6" class="w-full">
+
+      <label>7. *เฉพาะภัยพิบัติด้านเกษตร* แบบการช่วยเหลือผู้ประสบภัยพิบัติฯ (สภ.1) หรือแบบประมวลรวบรวมความเสียหายด้านเกษตร (แบบ กษ 02/กษ 03)</label>
+      <input type="file" id="file7" class="w-full">
+
+      <label>8. หลักฐานการจ่ายเงินและเอกสารประกอบรายการ</label>
+      <input type="file" id="file8" class="w-full">
+
+      <label>9. หนังสืออนุมัติขยายระยะเวลาการให้ความช่วยเหลือผู้ประสบภัยฯ (ถ้ามี)</label>
+      <input type="file" id="file9" class="w-full">
+
+      <label>10. หนังสืออนุมัติขยายวงเงินทดรองราชการเพื่อช่วยเหลือผู้ประสบภัยฯ (ถ้ามี)</label>
+      <input type="file" id="file10" class="w-full">
+
+      <label>11. หนังสืออนุมัติการปฏิบัตินอกเหนือระเบียบและหลักเกณฑ์ จาก กค. (ถ้ามี)</label>
+      <input type="file" id="file11" class="w-full">
+    </div>
+
+    <button type="submit"
+      class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700">
+      📤 ส่งเอกสาร
+    </button>
+
+  </form>
+</div>
+
+<footer class="text-center mt-10 text-gray-500">
+  © ABC จำกัด
+</footer>
+
+<script>
+document.getElementById("form").addEventListener("submit", async function(e) {
+  e.preventDefault();
+
+  Swal.fire({
+    title: 'กำลังอัปโหลด...',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading()
+  });
+
+  let formData = {
+    unitName: document.getElementById("unitName").value
+  };
+
+  // อ่านไฟล์ 11 รายการ
+  for (let i = 1; i <= 11; i++) {
+    let fileInput = document.getElementById("file" + i);
+    let file = fileInput.files[0];
+
+    if (file) {
+      let base64 = await toBase64(file);
+      formData["file" + i] = {
+        bytes: base64.split(',')[1],
+        mimeType: file.type,
+        filename: file.name
+      };
+    }
+  }
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res.status === "success") {
+        Swal.fire("สำเร็จ", "ส่งเอกสารเรียบร้อย", "success");
+        document.getElementById("form").reset();
+      } else {
+        Swal.fire("ผิดพลาด", res.message, "error");
+      }
+    })
+    .withFailureHandler(err => {
+      Swal.fire("ผิดพลาด", err.message, "error");
+    })
+    .uploadData(formData);
+});
+
+// แปลงไฟล์เป็น base64
+function toBase64(file) {
+  return new Promise((resolve, reject) => {
+    let reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+</script>
+
+</body>
+</html>
